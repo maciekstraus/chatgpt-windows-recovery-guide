@@ -4,7 +4,17 @@
 
 **Maciej Straus (@maciekstraus) — 24 November 2026.** Independent field report from one workstation, not an official OpenAI fix.
 
-## Quick answer
+## Latest result — 24 November 2026, evening
+
+**Targeted SQLite queue recovery restored operation in all nine immediate user-reported tests.** The earlier rollback described below was only temporary: MessagePort failed again on 26.1117.3838.0, including a text-only follow-up.
+
+A single pending message with inline images occupied 279.325 MiB (292,893,447 bytes) in the local `queued-follow-ups` setting of `.codex-global-state.sqlite`. Its full session ID matched the earlier logged 512 MiB serialization failure. A guarded transaction removed only that session's pending entry after a SHA256-verified backup. The queue became `{}` (2 bytes), JSON was valid, SQLite quick_check returned ok, and the backup was unchanged. Without changing the desktop version, nine tests passed: startup, projects/history, original affected conversation, two consecutive text messages, fresh Work chat, Chrome integration, one image and several images.
+
+**Start here:** [Windows SQLite queue audit and recovery](queue-recovery/README.md) | [PowerShell script](queue-recovery/Recover-Queue.ps1). Default is read-only audit on a private copy. Repair is optional and only for the supported single-message case. The generalized script has not been independently end-to-end tested on Windows. It is not an official fix. Credit: [Shinshin124's macOS investigation](https://github.com/openai/codex/issues/63217#issuecomment-7128925968).
+
+The exact RPC mechanism, long-term stability, other affected sessions and cloud synchronization remain unverified. Prefer the supported current app and queue diagnosis over downgrading; the older rollback notes are preserved below as historical evidence, not the recommended first intervention.
+
+## Historical rollback observation
 
 On this workstation, switching the main desktop package to **26.1117.3838.0** restored large attachments and Chrome access in fresh Work chats, including a new chat inside an existing project. The primary runtime and Chrome extension were left unchanged. Some old chats still failed. Try a fresh Work chat first; do not downgrade a working installation.
 
