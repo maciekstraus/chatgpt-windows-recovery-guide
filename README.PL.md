@@ -4,7 +4,17 @@
 
 **Maciej Straus (@maciekstraus), 24 listopada 2026 r.** Niezależne studium przypadku z jednego komputera. Nie jest to oficjalna naprawa OpenAI.
 
-## Najważniejszy wynik
+## Aktualizacja — 24 listopada 2026 r., wieczór
+
+**Punktowa naprawa kolejki SQLite: 9/9 bezpośrednich testów zakończyło się sukcesem według użytkownika.** Wcześniejszy downgrade był tymczasowym obejściem: błąd MessagePort powrócił na 26.1117.3838.0 również przy tekstowym poleceniu.
+
+Jedna oczekująca wiadomość z zakodowanymi obrazami zajmowała 279,325 MiB (292 893 447 bajtów) w ustawieniu `queued-follow-ups` bazy `.codex-global-state.sqlite`. Pełny identyfikator sesji był zgodny z wcześniejszym błędem serializacji 512 MiB. Po zabezpieczeniu kopii SHA256 transakcja usunęła wyłącznie wpis tej sesji z kolejki. Pozostało `{}` (2 bajty), JSON poprawny, quick_check: ok, kopia bez zmian. Bez zmiany wersji aplikacji użytkownik potwierdził start, projekty i historię, pierwotną rozmowę, dwie wiadomości tekstowe, nowy Work, Chrome, jedno i kilka zdjęć.
+
+**Zacznij tutaj:** [Audyt i naprawa kolejki SQLite](queue-recovery/README.PL.md) | [Skrypt PowerShell](queue-recovery/Recover-Queue.ps1). Domyślnie tylko odczyt kopii. Naprawa opcjonalna, wyłącznie dla obsługiwanego przypadku jednej wiadomości. Uogólniony skrypt nie został niezależnie przetestowany end-to-end na Windows. To nieoficjalna procedura. Podziękowania dla [Shinshin124 za diagnostykę macOS](https://github.com/openai/codex/issues/63217#issuecomment-7128925968).
+
+Nie potwierdzono dokładnego mechanizmu RPC, trwałości naprawy, działania wszystkich historycznych sesji ani synchronizacji chmurowej. Preferuj wspieraną aktualną wersję i diagnostykę kolejki; wcześniejsze informacje o downgrade zachowujemy jako historię eksperymentu, a nie zalecany pierwszy krok.
+
+## Wcześniejsze obserwacje dotyczące downgrade
 
 Wersja **26.1117.3838.0** przywróciła obsługę dużych załączników i dostęp do Chrome w nowych rozmowach Work, także w istniejącym projekcie. Runtime i rozszerzenie Chrome pozostały niezmienione podczas testów zmiany wersji. Niektóre stare rozmowy nadal nie działały. Najpierw wypróbuj nowy czat Work, nie cofaj sprawnie działającej aplikacji.
 
