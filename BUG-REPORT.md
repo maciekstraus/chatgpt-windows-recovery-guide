@@ -4,6 +4,26 @@ Originally submitted as [OpenAI Codex issue #63610](https://github.com/openai/co
 
 [Full English guide](README.md) | [Polska instrukcja](README.PL.md)
 
+## Follow-up: targeted SQLite recovery (2026-11-24, evening)
+
+The earlier rollback to 26.1117.3838.0 did not remain stable: a subsequent text-only follow-up triggered MessagePort again. The queue hypothesis from [#63217](https://github.com/openai/codex/issues/63217#issuecomment-7128925968) was then tested on the Windows workstation, with no further version change during the queue repair.
+
+| Measurement | Before | After |
+|---|---:|---:|
+| Global queued-follow-ups value | 292,893,447 bytes | 2 bytes |
+| Pending entries / messages | 1 / 1 | 0 / 0 |
+| Inline data:image/ marker | present | absent (empty object) |
+| Physical settings DB | 281.89 MiB | 281.89 MiB |
+| SQLite quick_check | not recorded | ok |
+
+The full queue entry GUID matched the session associated with the earlier 536870912-byte serialization error. A private SHA256-verified backup was made. Read-only simulation yielded an empty JSON object. A guarded SQLite transaction using Windows PowerShell 5.1 and winsqlite3.dll removed only the identified pending entry, leaving the row itself and history databases in place. After COMMIT: valid JSON, queue {}, quick_check ok, backup hash unchanged. No VACUUM. The user authorized removal of that unsent message and reported that the needed materials had already been sent.
+
+All nine immediate user-reported smoke tests passed: application launch, projects/history visibility, opening the original affected chat, first text message, second text message, new Work chat, Chrome integration, single image, several images. These are user-reported outcomes, not independently instrumented or long-duration tests. No proof that all historical chats or sync issues were restored.
+
+The 279.325 MiB persisted value and 512 MiB RPC limit are different measurements; the exact serialization pathway/amplification is not established. The queue is a strong candidate in this case, not a universal explanation for every MessagePort/browser error. Recommend bounded queue serialization, graceful handling of oversized queued images, documented non-destructive queue inspection/cancellation, and recovery that preserves local histories. Please keep the issue open for maintainer triage.
+
+[Generalized guarded PowerShell tool and limitations](queue-recovery/README.md) | [Polska wersja](queue-recovery/README.PL.md). The generalized tool is not independently end-to-end tested on Windows; the case-specific predecessor ran successfully on the affected workstation. Private session identifiers, attachments, project names, raw logs and database contents are omitted.
+
 ## Environment
 
 - Date: 2026-11-24; Windows 11 Pro 26H2 build 26300.10075, x64
