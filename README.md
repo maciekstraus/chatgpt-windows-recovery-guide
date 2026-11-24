@@ -111,3 +111,7 @@ Some very large historical conversations still failed to load. Text was partiall
 - [#57491](https://github.com/openai/codex/issues/57491) and [#57523](https://github.com/openai/codex/issues/57523): originating browser context errors.
 
 OpenAI should investigate bounded/paginated history serialization, recoverable error handling and browser context binding in Work. If you encounter similar symptoms, report your versions and sanitized observations; do not assume the same root cause. This is a one-workstation field report, not a recommendation to install an old build on every affected machine.
+
+## Companion project: ChatGPT Session Recovery
+
+[Local JSONL text extractor and tests](session-recovery/README.md) — experimental, offline utility for extracting readable text from a private backup without modifying the source. Includes a Polish guide and synthetic tests.
