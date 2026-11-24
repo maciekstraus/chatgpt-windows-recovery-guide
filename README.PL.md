@@ -123,3 +123,7 @@ Część historycznych rozmów nadal nie ładowała się. Z prywatnej kopii jedn
 - [#57491](https://github.com/openai/codex/issues/57491), [#57523](https://github.com/openai/codex/issues/57523) — błędy kontekstu przeglądarki.
 
 Warto zbadać stronicowanie historii, obsługę błędów serializacji bez zamykania połączenia oraz wiązanie kontekstu przeglądarki z sesją Work. To pojedyncze studium przypadku, nie zalecenie instalowania starszej wersji na każdym komputerze.
+
+## Projekt towarzyszący: ChatGPT Session Recovery
+
+[Lokalne odzyskiwanie tekstu z JSONL wraz z testami](session-recovery/README.PL.md) — eksperymentalne narzędzie offline do odczytu prywatnej kopii bez modyfikacji źródła. Dokumentacja po polsku i angielsku.
