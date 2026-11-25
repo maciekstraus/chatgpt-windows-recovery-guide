@@ -2,6 +2,12 @@
 
 24 listopada 2026 r. — po punktowej korekcie na jednym komputerze z Windows użytkownik potwierdził 9/9 testów. Inspiracja: [diagnostyka macOS autorstwa Shinshin124](https://github.com/openai/codex/issues/63217#issuecomment-7128925968). [Raport techniczny](../BUG-REPORT.md) | [Zgłoszenie #63610](https://github.com/openai/codex/issues/63610).
 
+## Aktualizacja — 25 listopada 2026 r.
+
+W tej samej rozmowie na Windows powróciła jedna oczekująca wiadomość z obrazami (274 205 978 bajtów / 261,503 MiB). Świeża zweryfikowana kopia i punktowa transakcja ponownie przywróciły kolejkę do 2 bajtów. Sześć wykonanych testów zaliczono, trzy odłożono. [Health Audit V2](../health-audit/README.PL.md) potwierdził pustą kolejkę, 7/7 kontroli strukturalnych, zero ostrzeżeń i brak dopasowań błędów w krótkiej próbce logów. [Raport techniczny](../BUG-REPORT.md). Uogólniony skrypt naprawczy poniżej nadal nie był niezależnie testowany end-to-end; audyt jest odrębnym, praktycznie sprawdzonym narzędziem tylko do odczytu.
+
+**Przed edycją SQLite:** gdy rozmowa jest dostępna, spróbuj anulować wyłącznie problematyczną niewysłaną wiadomość/szkic po potwierdzeniu, że można ją utracić. [CHUAN33 opisał naprawę w samym UI na macOS](https://github.com/openai/codex/issues/63217#issuecomment-7163980390). Sprawdź też oba globalne JSON-y: [#63592](https://github.com/openai/codex/issues/63592) opisuje inny przypadek Windows z danymi kolejki w obu plikach. Nie czyść wszystkich kolejek i nie resetuj całego profilu rutynowo. Nie potwierdzono trwałej naprawy.
+
 ## Wyniki
 
 Aplikacja 26.1117.3838.0: wcześniejszy downgrade pomógł jedynie tymczasowo. W logach jednej sesji wystąpił limit serializacji 536870912 bajtów. Baza ustawień miała 281,89 MiB, kolejka queued-follow-ups 292 893 447 bajtów (279,325 MiB), jedna wiadomość i znacznik data:image/. Pełny identyfikator sesji był zgodny z wcześniejszym błędem. Symulacja bez zapisu dała 2 bajty. Po kopii zweryfikowanej SHA256 transakcja SQLite usunęła wyłącznie wpis tej sesji z kolejki. JSON poprawny, quick_check: ok, kopia bez zmian. Użytkownik potwierdził start, projekty i historię, pierwotną rozmowę, dwie kolejne wiadomości tekstowe, nowy Work, Chrome, jedno i kilka zdjęć. Nie zmieniano wersji podczas naprawy. Nie wykonywano VACUUM.
