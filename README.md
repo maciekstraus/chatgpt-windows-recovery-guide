@@ -2,9 +2,21 @@
 
 [Polska wersja](README.PL.md) | [Technical report](BUG-REPORT.md) | [OpenAI issue #63610](https://github.com/openai/codex/issues/63610)
 
-**Maciej Straus (@maciekstraus) — 24 November 2026.** Independent field report from one workstation, not an official OpenAI fix.
+**Maciej Straus (@maciekstraus) — 24–25 November 2026.** Independent field report from one workstation, not an official OpenAI fix.
 
-## Latest result — 24 November 2026, evening
+## Latest result — 25 November 2026, recurrence and second recovery
+
+The failure recurred on the same workstation, same desktop version 26.1117.3838.0 and same conversation after intensive image work. The user reports approximately 150 images during the day and an attempted batch of about 30 at the time of the recurrence; the exact attachment bytes and initiating RPC remain unverified.
+
+The read-only audit found 274,205,978 bytes (261.503 MiB) in the global SQLite queued-follow-ups setting. A separate read-only diagnostic confirmed exactly one pending message, an inline image marker and the same full thread ID as on 24 November. Both JSON state files and the separate queue database showed no queued entries. With the app closed, a new SHA256-verified backup and guarded transaction removed only that pending message. The queue returned to 2 bytes, JSON valid, quick_check ok, backup unchanged. No version change or history edits.
+
+Six immediate user-reported tests passed: startup, projects/history, original chat, two successive text messages and Chrome integration. Three further tests (fresh Work Local, small image, local image directory) were deferred, not failed. The follow-up audit at 22:54 local confirmed the queue remained empty, 7/7 database quick_check results ok, zero warnings and no matching new errors in the limited log sample. This is short-term evidence, not a permanent fix.
+
+**New module:** [Health Audit V2](health-audit/README.md) — exact PowerShell file used in two successful Windows audits, read-only with the desktop closed. [Detailed technical measurements](BUG-REPORT.md).
+
+**Prefer UI cancellation first** if the affected conversation is accessible and the unsent message can be discarded: [CHUAN33's macOS report](https://github.com/openai/codex/issues/63217#issuecomment-7163980390) describes recovery without editing SQLite (317.5 → 34.2 MiB). Another [independent Windows report #63592](https://github.com/openai/codex/issues/63592) describes a large pending queue also persisted in JSON and its backup. These are corroborating user reports, not proof that every MessagePort error has the same cause. [#62901](https://github.com/openai/codex/issues/62901) includes continued failures on newer 26.1120.6357.0. No official fix was confirmed in the reviewed issues as of 25 November.
+
+## Earlier result — 24 November 2026, evening
 
 **Targeted SQLite queue recovery restored operation in all nine immediate user-reported tests.** The earlier rollback described below was only temporary: MessagePort failed again on 26.1117.3838.0, including a text-only follow-up.
 
@@ -38,7 +50,7 @@ Windows 11 Pro 26H2, build 26300.10075, x64; Windows PowerShell 5.1; Chrome 157.
 | 26.1120.5083.0 | Crashes observed | Not independently tested |
 | 26.1117.4957.0 | Crashes observed | Not independently tested |
 | 26.1111.9664.0 | Worked in a new chat (21 photos) | Failed in tested Work session |
-| **26.1117.3838.0** | **Worked** | **Worked in fresh Work chats, including within an existing project** |
+| **26.1117.3838.0** | Initially worked; later queue-related recurrence | **Worked in fresh Work chats, including within an existing project** |
 
 The intermediate build restored both capabilities in these tests. The old Work conversation still returned `Browser access requires the originating browser context`. The Chrome extension itself could read the active page from its own panel. A fresh desktop Work chat listed 13 tabs; another fresh Work chat inside the affected project accessed the same authenticated CMS, local files and recovered task materials. No claim is made that all historical sessions were restored. These observations suggest a version or session-context issue, but do not establish root cause.
 
@@ -105,7 +117,7 @@ See [Microsoft documentation for Add-AppxPackage](https://learn.microsoft.com/en
 ### 5. Retest with a fresh Work session
 
 - Open a new desktop Work chat and select the Chrome integration. Ask it to list tabs or read a non-sensitive page, without making changes.
-- Repeat in a new chat within the affected project. Test a small attachment and then a representative larger batch of non-sensitive files.
+- Repeat in a new chat within the affected project. Test a small non-sensitive attachment only if needed; avoid deliberately reproducing an oversized queue.
 - Verify the installed version again. If only an existing chat fails, preserve it and transfer the task via a local handoff document and prepared files instead of repeated retries.
 - A Microsoft Store policy `AutoDownload=2` was temporarily set during this case. It affects Store apps broadly, not just ChatGPT, and is not proof that independent OpenAI updates are blocked. Use approved update controls only; restore the original setting promptly after testing or when a stable supported version is available. Never permanently block security updates.
 
