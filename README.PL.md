@@ -2,9 +2,21 @@
 
 [English version](README.md) | [Raport techniczny](BUG-REPORT.md) | [Zgłoszenie OpenAI #63610](https://github.com/openai/codex/issues/63610)
 
-**Maciej Straus (@maciekstraus), 24 listopada 2026 r.** Niezależne studium przypadku z jednego komputera. Nie jest to oficjalna naprawa OpenAI.
+**Maciej Straus (@maciekstraus), 24–25 listopada 2026 r.** Niezależne studium przypadku z jednego komputera. Nie jest to oficjalna naprawa OpenAI.
 
-## Aktualizacja — 24 listopada 2026 r., wieczór
+## Najnowsze wyniki — 25 listopada 2026 r., nawrót i druga naprawa
+
+Awaria powróciła na tym samym komputerze, w tej samej wersji 26.1117.3838.0 i rozmowie po intensywnej pracy ze zdjęciami. Użytkownik szacuje ok. 150 zdjęć w ciągu dnia i próbę dołączenia kolejnej partii ok. 30 zdjęć przy nawrocie. Nie ustalono dokładnej wielkości załączników ani inicjującego RPC.
+
+Audyt tylko do odczytu wykazał 274 205 978 bajtów (261,503 MiB) w globalnym ustawieniu queued-follow-ups. Odrębna diagnostyka potwierdziła jedną oczekującą wiadomość, znacznik obrazów inline i pełny identyfikator tej samej rozmowy co 24 listopada. Oba pliki JSON i osobna baza kolejki nie wykazywały oczekujących wpisów. Po zamknięciu aplikacji, wykonaniu świeżej kopii SHA256 i transakcji z zabezpieczeniami usunięto tylko tę niewysłaną wiadomość. Kolejka: 2 bajty, poprawny JSON, quick_check: ok, kopia bez zmian. Bez zmiany wersji i edycji historii.
+
+Użytkownik potwierdził sześć testów: start, projekty/historia, pierwotna rozmowa, dwie kolejne wiadomości tekstowe oraz Chrome. Trzy dalsze testy (nowy Work Local, małe zdjęcie, lokalny katalog zdjęć) odłożono; nie były nieudane. Kontrolny audyt o 22:54 potwierdził pustą kolejkę, 7/7 prawidłowych quick_check, zero ostrzeżeń i brak dopasowań nowych błędów w ograniczonej próbce logów. To krótkoterminowy wynik, nie trwała naprawa.
+
+**Nowy moduł:** [Health Audit V2](health-audit/README.PL.md) — dokładny plik PowerShell użyty w dwóch udanych audytach Windows. Tylko odczyt przy zamkniętej aplikacji. [Szczegółowe pomiary](BUG-REPORT.md).
+
+**Najpierw anulowanie wiadomości w UI**, jeśli rozmowa jest dostępna i można odrzucić niewysłaną wiadomość: [przypadek CHUAN33 na macOS](https://github.com/openai/codex/issues/63217#issuecomment-7163980390) opisuje odzyskanie sprawności bez edycji SQLite (317,5 → 34,2 MiB). [Niezależne zgłoszenie Windows #63592](https://github.com/openai/codex/issues/63592) opisuje także kolejkę zapisaną w JSON i jego kopii. To relacje użytkowników, nie dowód wspólnej przyczyny wszystkich błędów MessagePort. [#62901](https://github.com/openai/codex/issues/62901) zawiera doniesienia o awariach na nowszej wersji 26.1120.6357.0. W przejrzanych zgłoszeniach brak potwierdzenia oficjalnej poprawki na 25 listopada.
+
+## Wcześniejszy wynik — 24 listopada 2026 r., wieczór
 
 **Punktowa naprawa kolejki SQLite: 9/9 bezpośrednich testów zakończyło się sukcesem według użytkownika.** Wcześniejszy downgrade był tymczasowym obejściem: błąd MessagePort powrócił na 26.1117.3838.0 również przy tekstowym poleceniu.
 
@@ -40,7 +52,7 @@ Windows 11 Pro 26H2, kompilacja 26300.10075, x64; PowerShell 5.1; Chrome 157.0.8
 | 26.1120.5083.0 | Awarie | Nie testowano niezależnie |
 | 26.1117.4957.0 | Awarie | Nie testowano niezależnie |
 | 26.1111.9664.0 | Działały w nowym czacie (21 zdjęć) | Błąd w testowanej sesji |
-| **26.1117.3838.0** | **Działały** | **Działał w nowych rozmowach Work, także w istniejącym projekcie** |
+| **26.1117.3838.0** | Początkowo działały; późniejszy nawrót kolejki | **Działał w nowych rozmowach Work, także w istniejącym projekcie** |
 
 W starej rozmowie nadal występował błąd `Browser access requires the originating browser context`. Panel rozszerzenia Chrome potrafił odczytać bieżącą stronę. Po zmianie wersji nowa rozmowa desktopowa odczytała 13 kart; kolejna, wewnątrz istniejącego projektu, uzyskała dostęp do zalogowanego CMS, plików lokalnych i odzyskanych materiałów. Nie potwierdzono przyczyny źródłowej ani naprawy wszystkich historycznych sesji.
 
@@ -117,7 +129,7 @@ Get-AppxPackage *OpenAI* | Select-Object Name, Version, Status
 ### 5. Przetestuj w nowej rozmowie Work
 
 1. Utwórz nowy czat Work na komputerze i wybierz integrację Chrome. Poproś o listę kart lub odczyt niesensytywnej strony bez dokonywania zmian.
-2. Powtórz test wewnątrz istniejącego projektu. Sprawdź małą, a następnie większą paczkę niepoufnych plików.
+2. Powtórz test wewnątrz istniejącego projektu. Jeśli potrzebne, sprawdź mały niepoufny załącznik; nie prowokuj celowo nadmiernego rozrostu kolejki.
 3. Ponownie sprawdź wersję. Jeżeli błąd dotyczy tylko starej rozmowy, zachowaj ją, a zadanie przenieś z wykorzystaniem pliku przekazania i gotowych materiałów.
 4. W naszym przypadku tymczasowo ustawiono politykę Microsoft Store AutoDownload=2. Dotyczy ona aplikacji Store szerzej, nie tylko ChatGPT, i nie gwarantuje zablokowania niezależnych aktualizacji OpenAI. Przywróć wcześniejsze ustawienie po zakończeniu testów lub po wydaniu stabilnej wspieranej wersji. Nie blokuj trwale aktualizacji bezpieczeństwa.
 
