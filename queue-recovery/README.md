@@ -2,6 +2,12 @@
 
 **24 November 2026 — one Windows workstation, user-reported 9/9 smoke tests passed after a targeted repair.** Credit: [Shinshin124's macOS investigation](https://github.com/openai/codex/issues/63217#issuecomment-7128925968). See [our technical report](../BUG-REPORT.md) and [OpenAI issue #63610](https://github.com/openai/codex/issues/63610).
 
+## Update — 25 November 2026
+
+The same Windows conversation recurred with one pending image-containing message (274,205,978 bytes / 261.503 MiB). A fresh verified backup and the case-specific guarded repair again returned the queue to 2 bytes. Six performed smoke tests passed; three were deferred. A subsequent [Health Audit V2](../health-audit/README.md) confirmed the empty queue and 7/7 structural checks, zero warnings, and no matching errors in a short bounded log window. See [technical report](../BUG-REPORT.md). The generalized repair tool below remains independently untested end-to-end; the audit script is a separate, field-tested read-only tool.
+
+**Before editing SQLite:** when the affected conversation opens, try cancelling only the problematic unsent message/draft in the UI if its loss is authorized. [CHUAN33 reported UI-only recovery on macOS](https://github.com/openai/codex/issues/63217#issuecomment-7163980390). Inspect the global JSON files too: [#63592](https://github.com/openai/codex/issues/63592) reports a different Windows case with pending data in both JSON copies. Do not clear all queues or reset the whole profile as a routine step. No permanent fix is established.
+
 ## Evidence
 
 Desktop 26.1117.3838.0 (rollback had helped only temporarily). Earlier logs recorded a 536870912-byte serialization rejection in one session. The local settings database was 281.89 MiB; its global queued-follow-ups setting held 292,893,447 bytes (279.325 MiB), exactly one array with one pending message and an inline data:image/ marker. The full session ID matched the earlier logged failure. A read-only simulation returned a two-byte empty object. After a hash-verified backup, a guarded SQLite transaction removed only that session's pending queue entry. JSON valid, quick_check ok, backup unchanged. All nine immediate user-reported tests passed: startup, projects/history, original affected conversation, first and second text messages, new Work chat, Chrome integration, one image, several images. No version change during the repair. Physical database size unchanged; no VACUUM.
