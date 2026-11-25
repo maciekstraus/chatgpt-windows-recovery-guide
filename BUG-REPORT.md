@@ -4,6 +4,36 @@ Originally submitted as [OpenAI Codex issue #63610](https://github.com/openai/co
 
 [Full English guide](README.md) | [Polska instrukcja](README.PL.md)
 
+## Follow-up: recurrence and second targeted recovery (2026-11-25)
+
+Same workstation, desktop 26.1117.3838.0, runtime 26.1123.915.0. After the first recovery, the user resumed normal work, reporting approximately 150 images during the day and a further attempted batch of about 30 when the crash recurred. These counts are estimates; the exact raw batch size and RPC amplification were not measured. No version change during the two repairs.
+
+| Measurement | 24 Nov before / after repair | 25 Nov before / after repair + tests |
+|---|---:|---:|
+| Global queued-follow-ups bytes | 292,893,447 / 2 | 274,205,978 / 2 |
+| Pending entries / messages | 1/1 → 0/0 | 1/1 → 0/0 |
+| Inline image marker before | present | present |
+| Same full affected thread GUID | yes | yes |
+| Physical settings DB | 281.89 MiB unchanged | 281.891 MiB unchanged |
+| Reusable settings DB space | not recorded | 18.320 → 280.082 MiB |
+| Structural quick_check (all audited DBs) | settings DB ok after | 7/7 ok before and after |
+| User-reported functional checks | 9/9 passed | 6/6 performed passed; 3 deferred |
+
+The 22:42 audit (local time) recorded the large queue, 6 serialization and 3 MessagePort matching log lines since 24 Nov 23:35:37; counts are not unique incidents and the cutoff predates the first repair completion. Separate queue DB had 0 items; both global JSON files had zero top-level queue entries. The large queue exceeded the audit's 64 MiB parsing guard, not a product limit. A separate read-only query on a fresh SHA256-verified backup confirmed valid JSON object, one array with one message, inline image marker, and the exact same full thread ID. With the desktop closed, the user authorized a guarded transaction that removed only this entry. COMMIT succeeded; queue {}, 2 bytes; valid JSON; quick_check ok; backup hash unchanged. No VACUUM, no history database edits.
+
+After restart, six user-reported checks passed: startup, projects/history visibility, original affected conversation, first and second text messages, Chrome integration. New Work Local, one small image, and local image-folder access were explicitly deferred (not failures). The 22:54:32 audit after these tests and a clean desktop exit confirmed an empty queue, zero audit warnings, seven database quick_check results ok, five local project folders and 83 PDF candidates unchanged. Session file count 1700 → 1701; history item records 81956 → 81965; turns 5253 → 5255. These aggregate counts do not establish complete history preservation or sync. Four session files exceeded 512 MiB on disk, including a large compressed session; no decompression or deletion was performed. On-disk size is not RPC size.
+
+The second audit inspected three recently modified log files, bounded to 4 MiB tails, and found no matching serialization, MessagePort, Chrome context, OOM or SQLite error lines after 22:48:52 local. This short window and bounded scan do not establish absence of all errors. A first attempted audit correctly refused to start while the desktop was running. The exact [Health Audit V2 script](health-audit/ChatGPT-Health-Audit-v2.ps1) ran twice on the workstation; [English instructions](health-audit/README.md) / [Polish instructions](health-audit/README.PL.md). It does not repair anything and is not a live monitor; the case-specific SQL repair is distinct from the generalized recovery script, which remains independently untested end-to-end.
+
+### Corroborating reports and updated recovery priority
+
+- [#63592](https://github.com/openai/codex/issues/63592): independent Windows report of roughly 356 MB pending image data also persisted in both JSON files; recovery by clearing queued data. Not our exact procedure.
+- [#63217 — CHUAN33](https://github.com/openai/codex/issues/63217#issuecomment-7163980390): macOS M4 Pro, queue 317.5 MiB → 34.2 MiB after cancelling unsent images and draft in app UI, two successful text turns without SQLite edits.
+- [#62901](https://github.com/openai/codex/issues/62901): further Windows reports on 26.1120.6357.0; profile rename/reset reported to help another user, but original problematic conversation not restored.
+- [#63798](https://github.com/openai/codex/issues/63798): newer Windows build browser handoff MessagePort failure; causal relationship unverified.
+
+Use UI cancellation of the identified unsent message first when accessible and authorized; targeted offline recovery is a fallback. The two cycles support a recurring persisted image-queue failure in this workstation, not a universal explanation, safe attachment threshold, or permanent fix. Request pre-persistence attachment validation, bounded queue serialization, graceful rejection and startup recovery, and documented non-destructive queue inspection/cancellation. Proposed next tests: local directory image workflow and alert-only monitoring. No live monitor or workflow validation yet.
+
 ## Follow-up: targeted SQLite recovery (2026-11-24, evening)
 
 The earlier rollback to 26.1117.3838.0 did not remain stable: a subsequent text-only follow-up triggered MessagePort again. The queue hypothesis from [#63217](https://github.com/openai/codex/issues/63217#issuecomment-7128925968) was then tested on the Windows workstation, with no further version change during the queue repair.
@@ -55,7 +85,7 @@ Existing sessions should load without crashing; fresh Work chats should process 
 | 26.1120.5083.0 | Crashes observed | Not independently tested |
 | 26.1117.4957.0 | Crashes observed | Not independently tested |
 | 26.1111.9664.0 | Worked in new chat | Failed in tested Work session |
-| **26.1117.3838.0** | **Worked** | **Worked in fresh Work chats, including inside an existing project** |
+| **26.1117.3838.0** | Initially worked; later queue-related recurrence | **Worked in fresh Work chats, including inside an existing project** |
 
 ## Recovery and reproduction notes
 
@@ -67,7 +97,7 @@ With 26.1117.3838.0:
 - Large attachments worked again.
 - The existing problematic Work chat still could not connect to Chrome, and some very large historical chats remained inaccessible.
 
-A useful comparison is to test the same authorized browser operation in an affected existing Work chat and in a fresh Work chat, then test a representative non-sensitive attachment batch. This is a field report, not a deterministic minimal reproduction. The root cause (version regression, session context, protocol compatibility or another factor) is not established. Rollback is a temporary workaround with security and compatibility risks, not a universal fix.
+A useful comparison is to test the same authorized browser operation in an affected existing Work chat and in a fresh Work chat, then test a small non-sensitive attachment only if needed; do not deliberately reproduce an oversized queue. This is a field report, not a deterministic minimal reproduction. The root cause (version regression, session context, protocol compatibility or another factor) is not established. Rollback is a temporary workaround with security and compatibility risks, not a universal fix.
 
 ## Related reports
 
